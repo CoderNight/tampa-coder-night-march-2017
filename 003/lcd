@@ -1,0 +1,234 @@
+#!/usr/bin/env bash
+
+# lcd: create an lcd digital display for decimal digits
+#
+# Takes a string of digits and prints lcd-style versions
+# on stdout.
+#
+# Takes a -s option to control the size of the display.
+#
+# Requires Bash 4.3+
+
+names=(
+  zero
+  one
+  two
+  three
+  four
+  five
+  six
+  seven
+  eight
+  nine
+)
+
+defa () { IFS=$'\n' read -rd '' -a "$1" ||: ;}
+defs () { IFS=$'\n' read -rd ''    "$1" ||: ;}
+
+defa zero <<'EOS'
+ - 
+| |
+   
+| |
+ - 
+EOS
+
+defa one <<'EOS'
+   
+  |
+   
+  |
+   
+EOS
+
+defa two <<'EOS'
+ - 
+  |
+ - 
+|  
+ - 
+EOS
+
+defa three <<'EOS'
+ - 
+  |
+ - 
+  |
+ - 
+EOS
+
+defa four <<'EOS'
+   
+| |
+ - 
+  |
+   
+EOS
+
+defa five <<'EOS'
+ - 
+|  
+ - 
+  |
+ - 
+EOS
+
+defa six <<'EOS'
+ - 
+|  
+ - 
+| |
+ - 
+EOS
+
+defa seven <<'EOS'
+ - 
+  |
+   
+  |
+   
+EOS
+
+defa eight <<'EOS'
+ - 
+| |
+ - 
+| |
+ - 
+EOS
+
+defa nine <<'EOS'
+ - 
+| |
+ - 
+  |
+ - 
+EOS
+
+defs usage_message <<'EOS'
+  Usage: lcd [options] <digits>
+
+  Creates a "digital display" of digits on the screen.
+
+  <digits> is a string of decimal digits of any length.
+
+  Options:
+
+    -s [digit]    change the size of the display to have [digit] bars
+                  in each panel
+EOS
+
+lcd_main () {
+  local digits=${1:-}
+  local size=1
+
+  if (( $# == 1 )); then
+    :
+  elif (( $# == 3 )); then
+    [[ $1 == '-s' ]] || error_out "invalid option '$1'"
+    size=$2
+    digits=$3
+  else
+    error_out "wrong number of arguments"
+  fi
+  [[ $digits =~ ^[[:digit:]]+$ ]] || error_out "digit string must contain only digits"
+  print_digits "$digits" "$size"
+}
+
+zero  () { alias_pdr "$@" ;}
+one   () { alias_pdr "$@" ;}
+two   () { alias_pdr "$@" ;}
+three () { alias_pdr "$@" ;}
+four  () { alias_pdr "$@" ;}
+five  () { alias_pdr "$@" ;}
+six   () { alias_pdr "$@" ;}
+seven () { alias_pdr "$@" ;}
+eight () { alias_pdr "$@" ;}
+nine  () { alias_pdr "$@" ;}
+
+alias_pdr () { print_digit_row "${FUNCNAME[1]}" "$@" ;}
+
+error_out () {
+  printf 'Error: %s\n\n' "$1"
+  echo "$usage_message"
+  exit 1
+}
+
+expand () {
+  local string=$1
+  local size=$2
+
+  printf '%s' "${string:0:1}"
+  print_times "${string:1:1}" "$size"
+  printf '%s' "${string:2}"
+}
+
+print_digit_row () {
+  local -n name=$1
+  local row=$2
+  local size=$3
+
+  expand "${name[row - 1]}" "$size"
+}
+
+print_digits () {
+  local digits=$1
+  local size=$2
+  local i
+
+  for i in {1..5}; do
+    print_rows "$digits" "$i" "$size"
+  done
+}
+
+print_row () {
+  local digits=$1
+  local row=$2
+  local size=$3
+  local digit
+  local i
+  local results=()
+
+  for (( i = 0; i < ${#digits}; i++ )); do
+    digit=${digits:$i:1}
+    results+=( "$("${names[$digit]}" "$row" "$size")" )
+  done
+  echo "${results[*]}"
+}
+
+print_rows () {
+  local row=$2
+  local size=$3
+  local i
+  local result
+
+  result=$(print_row "$@")
+  (( row % 2 )) && {
+    echo "$result"
+    return
+  }
+  for (( i = 0; i < size; i++ )); do
+    echo "$result"
+  done
+}
+
+print_times () {
+  local string=$1
+  local iterations=$2
+  local i
+
+  for (( i = 0; i < iterations; i++ )); do
+    printf "$string"
+  done
+}
+
+strict_mode () {
+  set -o errexit
+  set -o nounset
+  set -o pipefail
+}
+
+return 0 2>/dev/null ||:
+
+strict_mode
+lcd_main "$@"
