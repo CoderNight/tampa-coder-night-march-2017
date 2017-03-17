@@ -27,7 +27,7 @@ class Characters:
         for n in range(self.height):
             repeat = 1 if n in self.horizontal_lines else size
             for _ in range(repeat):
-                print(separator.join(c.draw_line(n, size) for c in self.chars))
+                print separator.join(c.draw_line(n, size) for c in self.chars)
 
 
 def parse_args():
